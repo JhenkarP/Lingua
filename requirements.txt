@@ -1,0 +1,23 @@
+# Core web framework
+fastapi
+uvicorn
+
+# Translation models
+transformers
+torch
+huggingface-hub
+requests
+
+# Audio handling
+SpeechRecognition
+pydub
+python-multipart
+
+# Text & language processing
+langdetect
+
+# GUI/audio utility (used in mp3.py)
+tk
+
+# ✅ Text-to-speech (for voice output)
+gTTS
