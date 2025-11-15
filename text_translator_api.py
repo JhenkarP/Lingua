@@ -1,4 +1,4 @@
-#text_translator_api.py
+# text_translator_api.py
 import torch
 from transformers import pipeline
 import requests
@@ -41,15 +41,23 @@ def choose_option(prompt, options):
 def translate_via_api(model_choice, hf_token, text, src_lang, tgt_lang):
     API_URL = f"https://api-inference.huggingface.co/models/{model_choice}"
     headers = {"Authorization": f"Bearer {hf_token}"}
+
     payload = {
         "inputs": text,
-        "parameters": {"src_lang": src_lang, "tgt_lang": tgt_lang}
+        "parameters": {
+            "src_lang": src_lang,
+            "tgt_lang": tgt_lang
+        },
+        "options": {
+            "wait_for_model": True   # IMPORTANT for NLLB models
+        }
     }
 
     response = requests.post(API_URL, headers=headers, json=payload)
     response.raise_for_status()
 
     result = response.json()
+
     if isinstance(result, list) and "translation_text" in result[0]:
         return result[0]["translation_text"]
     elif "error" in result:
@@ -60,13 +68,20 @@ def translate_via_api(model_choice, hf_token, text, src_lang, tgt_lang):
 def main():
     print("=== NLLB CLI Translator ===")
 
-    run_mode = choose_option("Select run mode:", {"Local": "local", "Hugging Face API": "api"})
+    # Choose run mode
+    run_mode = choose_option("Select run mode:", {
+        "Local": "local",
+        "Hugging Face API": "api"
+    })
+
+    # Choose model and languages
     model_choice = choose_option("Select the NLLB model to use:", MODELS)
     src_lang = choose_option("Select the source language:", LANGUAGES)
     tgt_lang = choose_option("Select the target language:", LANGUAGES)
 
     text = input("Enter the text to translate:\n> ")
 
+    # Local mode
     if run_mode == "local":
         print("\nLoading model locally... This may take a moment.\n")
         translator = pipeline(
@@ -81,11 +96,13 @@ def main():
         result = translator(text, max_length=400)
         translated_text = result[0]["translation_text"]
 
-    else:  # run_mode == "api"
+    else:  # Hugging Face API mode
         hf_token = input("Enter your Hugging Face API token:\n> ").strip()
         print("\nCalling Hugging Face Inference API...\n")
         try:
-            translated_text = translate_via_api(model_choice, hf_token, text, src_lang, tgt_lang)
+            translated_text = translate_via_api(
+                model_choice, hf_token, text, src_lang, tgt_lang
+            )
         except Exception as e:
             print(f"Translation API call failed: {e}")
             return
